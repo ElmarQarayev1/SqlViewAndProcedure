@@ -1,0 +1,98 @@
+CREATE DATABASE KITABXANA
+USE KITABXANA
+
+CREATE TABLE AUTHORS (
+    ID INT PRIMARY KEY IDENTITY,
+    NAME NVARCHAR(100) NOT NULL,
+    SURNAME NVARCHAR(100) NOT NULL
+)
+
+CREATE TABLE BOOKS (
+    ID INT PRIMARY KEY IDENTITY,
+    NAME NVARCHAR(100) CHECK(LEN(NAME)>=2),
+    AUTHORID INT FOREIGN KEY REFERENCES AUTHORS(ID),
+    PAGECOUNT INT CHECK(PAGECOUNT>=10),
+)
+
+INSERT INTO AUTHORS(NAME,SURNAME)
+VALUES
+(N'ELMAR',N'QARAYEV'),
+(N'KENAN',N'TAGIYEV'),
+(N'ILHAM',N'IBRAHIMOV'),
+(N'CINGIZ',N'ESGEREV'),
+(N'CAVID',N'QULIYEV')
+
+INSERT INTO BOOKS(NAME,AUTHORID,PAGECOUNT)
+VALUES
+(N'YAD',2,561),
+(N'SEFILLER',4,65),
+(N'SEKER PORTAGALI',3,123),
+(N'QURUR VE QEREZ',2,456),
+(N'YUZ ILIN TENHALIGI',5,34)
+
+--SELECT * FROM BOOKS
+
+--SELECT * FROM AUTHORS
+
+--Books ve Authors table-larınız olsun
+ --(one to many realtion) Id,Name,PageCount ve
+ ---AuthorFullName columnlarının valuelarını
+--qaytaran bir view yaradın
+
+CREATE VIEW BOOKS_AND_AUTHORS
+AS
+SELECT B.ID AS BOOKID,B.NAME AS BOOKNAME,B.PAGECOUNT,CONCAT(A.NAME,' ',A.SURNAME) AS FULLNAME FROM BOOKS AS B
+JOIN AUTHORS AS A ON B.AUTHORID=A.ID
+
+SELECT * FROM BOOKS_AND_AUTHORS
+
+--Göndərilmiş axtarış dəyərinə görə həmin axtarış
+ --dəyəri name və ya authorFullName-lərində olan Book-ları
+ --Id,Name,PageCount,AuthorFullName columnları şəklində
+-- göstərən procedure yazın
+
+CREATE PROCEDURE SEARCH_BOOKS_AND_AUTHORS
+@SEARCH NVARCHAR(100)
+AS 
+SELECT * FROM BOOKS_AND_AUTHORS 
+WHERE
+BOOKNAME LIKE CONCAT('%',@SEARCH,'%') OR FULLNAME LIKE CONCAT('%',@SEARCH,'%')
+
+EXEC SEARCH_BOOKS_AND_AUTHORS '%E%'
+
+
+--Book tabledaki verilmiş id-li datanın qiymətini verilmiş yeni qiymətə update edən procedure yazın.
+
+CREATE PROCEDURE UPDATE_BOOKS
+@BOOKID INT,
+@UPDATEPAGECOUNT INT
+AS
+ UPDATE BOOKS
+ SET PAGECOUNT=@UPDATEPAGECOUNT WHERE ID=@BOOKID
+
+ EXEC UPDATE_BOOKS 2,56
+
+ SELECT * FROM BOOKS
+
+--Authors-ları Id,FullName,BooksCount,MaxPageCount şəklində qaytaran view yaradırsınız
+--Id-author id-si
+--FullName - Name ve Surname birləşməsi
+--BooksCount - Həmin authorun əlaqəli olduğu kitabların sayı
+--MaxPageCount - həmin authorun əlaqəli olduğu kitabların içərisindəki max pagecount dəyəri
+
+
+CREATE VIEW AUTHORS_LOOK AS
+ SELECT 
+ A.ID AS AUTHORID,
+ CONCAT(A.NAME,' ',A.SURNAME) AS FULLNAME,
+ COUNT(B.ID) AS BOOKSCOUNT,
+ MAX(B.PAGECOUNT) AS MAXPAGECOUNT
+FROM AUTHORS AS A
+LEFT JOIN BOOKS AS B ON A.ID = B.AUTHORID
+GROUP BY A.ID, A.NAME, A.SURNAME
+
+SELECT * FROM AUTHORS_LOOK
+
+
+
+
